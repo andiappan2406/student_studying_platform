@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cognitive Prep - Interactive Learning</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- Header -->
+      <header class="main-header">
+        <!-- Progress bar for Pomodoro -->
+        <div id="pomodoro-progress" class="pomodoro-progress-bar"></div>
+        
+        <div class="header-title-group">
+          <div class="header-tag">
+            COGNITIVE PREP / VOL. 04
+            <button id="focus-mode-btn" class="btn-focus" title="Toggle Focus Mode (Fullscreen)">[ FOCUS MODE ]</button>
+          </div>
+          <div class="header-subtitle">Topic: Interactive Learning</div>
+        </div>
+        
+        <!-- Pomodoro Component -->
+        <div class="pomodoro-container">
+          <div class="pomodoro-timer-info">
+            <div class="pomodoro-modes">
+              <button id="mode-work" class="active">WORK</button>
+              <span class="divider">/</span>
+              <button id="mode-break">BREAK</button>
+            </div>
+            <div id="timer-display" class="timer-digits">25:00</div>
+          </div>
+          <div class="pomodoro-controls">
+            <button id="timer-toggle-btn" class="ctrl-btn"><span class="icon">▶</span> PLAY</button>
+            <button id="timer-reset-btn" class="ctrl-btn secondary"><span class="icon">↻</span> RESET</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Panels -->
+      <main class="main-content">
+        <!-- Left Panel: Fast-Stream Chat -->
+        <section id="tutor-panel" class="chat-panel bg-paper">
+          <div class="panel-header">
+            <div class="panel-tag">
+              01. Fast-Stream Chat
+              <span class="live-badge">LIVE</span>
+            </div>
+            <button id="clear-tutor" class="btn-clear" title="Clear Conversation">
+              <svg class="icon-trash" viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              CLEAR ALL
+            </button>
+          </div>
+          
+          <div class="panel-title-container">
+            <h1 class="panel-heading">Rapid<br>Inquiry.</h1>
+          </div>
+
+          <div id="tutor-messages" class="messages-container">
+            <div class="empty-state">Waiting to begin...</div>
+          </div>
+
+          <div class="input-area">
+            <div class="input-form">
+              <button id="tutor-mic" class="btn-mic" title="Dictate with Microphone">
+                <svg viewBox="0 0 24 24" class="icon-mic-off" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+              </button>
+              <input id="tutor-input" type="text" placeholder="Type your response..." />
+              <button id="tutor-send" class="btn-send" title="Send message">&rarr;</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Right Panel: Recall & Synthesis -->
+        <section id="mentor-panel" class="chat-panel bg-paper-dim">
+          <div class="panel-header">
+            <div class="panel-tag">02. Recall & Synthesis</div>
+            <button id="clear-mentor" class="btn-clear" title="Clear Conversation">
+              <svg class="icon-trash" viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              CLEAR ALL
+            </button>
+          </div>
+          
+          <div class="panel-title-container">
+            <h1 class="panel-heading">Deep<br>Memory.</h1>
+            <button id="btn-generate-mastery" class="btn-action">Generate Recall Mastery</button>
+          </div>
+
+          <!-- Chart Area -->
+          <div class="chart-wrapper">
+            <div class="chart-label">Session Activity</div>
+            <div id="activity-chart" class="chart-container">
+              <div class="chart-empty">Insufficient Data for Chart</div>
+            </div>
+          </div>
+
+          <div id="mentor-messages" class="messages-container">
+            <!-- Welcome message will be added here dynamically -->
+          </div>
+
+          <div class="input-area">
+            <div class="input-form">
+              <button id="mentor-mic" class="btn-mic" title="Dictate with Microphone">
+                <svg viewBox="0 0 24 24" class="icon-mic-off" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+              </button>
+              <input id="mentor-input" type="text" placeholder="Engage with Mentor..." />
+              <button id="mentor-send" class="btn-send" title="Send message">&rarr;</button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- API Key Settings Modal -->
+    <div id="api-modal" class="modal-overlay">
+      <div class="modal-card">
+        <h2 class="modal-title">API Configuration</h2>
+        <p class="modal-description">Please enter your <strong>Gemini API Key</strong> to connect Cognitive Prep to Gemini 3.5 Flash.</p>
+        <div class="input-group">
+          <input type="password" id="api-key-input" placeholder="AIzaSy..." />
+        </div>
+        <div class="modal-actions">
+          <button id="save-api-key" class="btn-action">Connect</button>
+        </div>
+        <p class="modal-footer">Your key is stored locally in your browser's Local Storage and never leaves your device.</p>
+      </div>
+    </div>
+
+    <!-- Script inclusion -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
