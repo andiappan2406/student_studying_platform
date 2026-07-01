@@ -27,7 +27,6 @@ let mentorMessages = [
 
 let isTutorTyping = false;
 let isMentorTyping = false;
-let apiKey = localStorage.getItem("GEMINI_API_KEY") || "";
 
 // Speech Recognition setups
 let recognitionTutor = null;
@@ -48,10 +47,6 @@ let pomodoroCycles = 0;
 let pomodoroInterval = null;
 
 // DOM Elements
-const apiModal = document.getElementById("api-modal");
-const apiKeyInput = document.getElementById("api-key-input");
-const saveApiKeyBtn = document.getElementById("save-api-key");
-
 const tutorMessagesDiv = document.getElementById("tutor-messages");
 const mentorMessagesDiv = document.getElementById("mentor-messages");
 
@@ -72,7 +67,6 @@ const focusModeBtn = document.getElementById("focus-mode-btn");
 
 // Init application
 document.addEventListener("DOMContentLoaded", () => {
-  checkApiKey();
   initSpeechRecognition();
   initPomodoro();
   initEventListeners();
@@ -85,25 +79,8 @@ function generateId() {
   return Math.random().toString(36).substring(2, 10);
 }
 
-// API Key Logic
-function checkApiKey() {
-  if (!apiKey) {
-    apiModal.classList.add("active");
-  } else {
-    apiModal.classList.remove("active");
-  }
-}
-
 // Event Listeners
 function initEventListeners() {
-  saveApiKeyBtn.addEventListener("click", () => {
-    const val = apiKeyInput.value.trim();
-    if (val) {
-      apiKey = val;
-      localStorage.setItem("GEMINI_API_KEY", apiKey);
-      apiModal.classList.remove("active");
-    }
-  });
 
   // Tutor Input Submission
   tutorInput.addEventListener("keydown", (e) => {
@@ -261,7 +238,7 @@ async function sendTutorMessage() {
   renderMessages();
 
   try {
-    await callGeminiStream(tutorMessages, TUTOR_SYSTEM_PROMPT, (chunkText) => {
+    await callFreeAIStream(tutorMessages, TUTOR_SYSTEM_PROMPT, (chunkText) => {
       const idx = tutorMessages.findIndex(m => m.id === modelMsgId);
       if (idx !== -1) {
         tutorMessages[idx].content = chunkText;
@@ -273,7 +250,7 @@ async function sendTutorMessage() {
     console.error(e);
     const idx = tutorMessages.findIndex(m => m.id === modelMsgId);
     if (idx !== -1) {
-      tutorMessages[idx].content = "Sorry, I ran into an error connecting to Gemini. Please check your API Key settings.";
+      tutorMessages[idx].content = "Sorry, I ran into an error connecting to the AI engine. Please check your network connection.";
       renderMessages();
     }
   } finally {
@@ -304,7 +281,7 @@ async function sendMentorMessage() {
   const mentorPrompt = MENTOR_SYSTEM_PROMPT_TEMPLATE(tutorTranscript);
 
   try {
-    await callGeminiStream(mentorMessages, mentorPrompt, (chunkText) => {
+    await callFreeAIStream(mentorMessages, mentorPrompt, (chunkText) => {
       const idx = mentorMessages.findIndex(m => m.id === modelMsgId);
       if (idx !== -1) {
         mentorMessages[idx].content = chunkText;
@@ -316,7 +293,7 @@ async function sendMentorMessage() {
     console.error(e);
     const idx = mentorMessages.findIndex(m => m.id === modelMsgId);
     if (idx !== -1) {
-      mentorMessages[idx].content = "Sorry, I ran into an error connecting to Gemini. Please check your API Key settings.";
+      mentorMessages[idx].content = "Sorry, I ran into an error connecting to the AI engine. Please check your network connection.";
       renderMessages();
     }
   } finally {
@@ -326,40 +303,32 @@ async function sendMentorMessage() {
   }
 }
 
-// Gemini SSE Streaming Client
-async function callGeminiStream(history, systemInstruction, onChunk) {
-  if (!apiKey) {
-    apiModal.classList.add("active");
-    throw new Error("Gemini API Key missing");
-  }
-
+// Keyless Free AI Streaming Client (Pollinations AI)
+async function callFreeAIStream(history, systemInstruction, onChunk) {
   const contents = history.map(msg => ({
-    role: msg.role === 'model' ? 'model' : 'user',
-    parts: [{ text: msg.content }]
+    role: msg.role === 'model' ? 'assistant' : 'user',
+    content: msg.content
   }));
 
-  // Clean the messages to avoid sending empty contents (like the placeholder model block while waiting)
-  const cleanedContents = contents.filter(c => c.parts[0].text.trim() !== "");
+  // Clean the messages to avoid sending empty contents
+  const cleanedContents = contents.filter(c => c.content.trim() !== "");
 
-  const requestBody = {
-    contents: cleanedContents,
-    generationConfig: {
-      temperature: 0.7,
-    }
-  };
-
+  const messages = [];
   if (systemInstruction) {
-    requestBody.systemInstruction = {
-      parts: [{ text: systemInstruction }]
-    };
+    messages.push({ role: 'system', content: systemInstruction });
   }
+  messages.push(...cleanedContents);
 
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${apiKey}`, {
+  const response = await fetch('https://text.pollinations.ai/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify(requestBody)
+    body: JSON.stringify({
+      messages: messages,
+      stream: true,
+      model: 'openai'
+    })
   });
 
   if (!response.ok) {
@@ -380,16 +349,22 @@ async function callGeminiStream(history, systemInstruction, onChunk) {
     buffer = lines.pop();
 
     for (const line of lines) {
-      if (line.startsWith("data: ")) {
+      const trimmedLine = line.trim();
+      if (!trimmedLine) continue;
+      if (trimmedLine.startsWith("data: ")) {
+        const dataStr = trimmedLine.slice(6).trim();
+        if (dataStr === "[DONE]") {
+          continue;
+        }
         try {
-          const data = JSON.parse(line.slice(6));
-          const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+          const data = JSON.parse(dataStr);
+          const text = data.choices?.[0]?.delta?.content || "";
           if (text) {
             fullText += text;
             onChunk(fullText);
           }
         } catch (e) {
-          console.error("SSE parse error", e);
+          console.error("SSE parse error", e, dataStr);
         }
       }
     }
